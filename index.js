@@ -1,6 +1,5 @@
 var express = require('express');
 var app = express();
-var audioMetaData = require('audio-metadata');
 var mm = require('music-metadata')
 var fs = require('fs');
 
