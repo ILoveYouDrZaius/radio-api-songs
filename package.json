@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.15.3",
-    "music-metadata": "^0.6.5"
+    "music-metadata": "^0.6.5",
+    "firebase": "^4.1.3"
   }
 }
