@@ -70,7 +70,7 @@ function updateSongs(arraySongs){
         db.ref('database/songs').orderByChild('path').equalTo(songFile.path).once('value').then((data)=>{
           if(data.numChildren() == 0){
             db.ref('database/songs/').push(songFile);
-          }else{
+          }else if(data.numChildren() == 1){
             data.forEach((song)=>{
               db.ref('database/songs/'+song.key).update({
                 "artist" : songFile.artist,
