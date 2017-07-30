@@ -19,7 +19,6 @@ const dirSongs = '/etc/ices2/music/';
 
 function promiseParseStream(){
   return new Promise((resolve, reject) => {
-    console.log('PROMISEPARSESTREAM');
     var arraySongs = [];
     new Promise((resolve, reject) => {
       dir = fs.readdirSync(dirSongs);
@@ -39,7 +38,8 @@ function promiseParseStream(){
                 "title" : metadata['common']['title'],
                 "album" : metadata['common']['album'],
                 "year" : metadata['common']['year'],
-                "duration" : metadata['format']['duration']
+                "duration" : metadata['format']['duration'],
+                "path" : dirSongs+file
               }
               resolve(song);
             }
@@ -63,37 +63,36 @@ function promiseParseStream(){
 
 function updateSongs(arraySongs){
   return new Promise((resolve, reject)=>{
-    var arrayVacio = [];
-    // db.ref('songs/').set(arrayVacio);
-    for(var i=0;i<arraySongs.length;i++){
-      console.log('song '+i);
-      console.log(arraySongs[i]);
-      db.ref('database/songs/').push(arraySongs[i]);
-    }
-    resolve(arraySongs);
-  });
-}
-
-function promiseParseStreamMock(){
-  return new Promise((resolve, reject) => {
-    var arraySongs = [];
-    new Promise((resolve, reject) => {
-      for(i=0;i<10;i++){
-        var song = {
-          "artist" : 'Artista '+i,
-          "title" : 'Ese titulo '+i,
-          "album" : 'Verano '+i,
-          "year" : '200'+i,
-          "duration" : '182'
-        }
-        arraySongs.push(song);
-      }
-      resolve(arraySongs);
-    }).then((arraySongs) => {
-      resolve(arraySongs);
-    }).catch((err)=>{
-      console.log(err);
-    });;
+    db.ref('database/songs').once('value').then((data)=>{
+      keysToDelete = Object.keys(data.val());
+      existeEnFirebase = false;
+      arraySongs.forEach((songFile)=>{
+        db.ref('database/songs').orderByChild('path').equalTo(songFile.path).once('value').then((data)=>{
+          if(data.numChildren() == 0){
+            db.ref('database/songs/').push(songFile);
+          }else{
+            data.forEach((song)=>{
+              db.ref('database/songs/'+song.key).update({
+                "artist" : songFile.artist,
+                "title" : songFile.title,
+                "album" : songFile.album,
+                "year" : songFile.year,
+                "duration" : songFile.duration
+              });
+            });
+          }
+        });
+        data.forEach((songFirebase)=>{
+          if(data.child(songFirebase.key).val().path == songFile.path){
+            i = keysToDelete.indexOf(songFirebase.key);
+            keysToDelete.splice(i, 1);
+          }
+        });
+      });
+      keysToDelete.forEach((keyToDelete)=>{
+        db.ref('database/songs/'+keyToDelete).remove();
+      })
+    });
   });
 }
 
